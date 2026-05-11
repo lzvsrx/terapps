@@ -1,4 +1,4 @@
-class User {
+﻿class User {
   User({
     required this.id,
     required this.name,
@@ -33,6 +33,8 @@ class WorkRecord {
     required this.title,
     required this.content,
     required this.createdAt,
+    this.updatedAt,
+    this.isFavorite = false,
   });
 
   final int id;
@@ -42,4 +44,6 @@ class WorkRecord {
   final String title;
   final String content;
   final DateTime createdAt;
+  final DateTime? updatedAt;
+  final bool isFavorite;
 }

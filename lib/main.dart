@@ -1,7 +1,7 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import 'data/github_backup_service.dart';
 import 'data/models.dart';
 import 'state/app_state.dart';
 import 'theme/app_theme.dart';
@@ -21,7 +21,7 @@ class TeraApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<AppState>(
-      builder: (_, app, __) => MediaQuery(
+      builder: (_, app, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(textScaler: TextScaler.linear(app.textScale)),
         child: MaterialApp(
           title: 'TERA Assistente',
@@ -51,16 +51,8 @@ class NeonBackground extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          Positioned(
-            top: -90,
-            left: -50,
-            child: _glow(AppTheme.neonPurple.withValues(alpha: 0.45), 240),
-          ),
-          Positioned(
-            bottom: -80,
-            right: -40,
-            child: _glow(AppTheme.neonBlue.withValues(alpha: 0.45), 220),
-          ),
+          Positioned(top: -90, left: -50, child: _glow(AppTheme.neonPurple.withValues(alpha: 0.45), 240)),
+          Positioned(bottom: -80, right: -40, child: _glow(AppTheme.neonBlue.withValues(alpha: 0.45), 220)),
           child,
         ],
       ),
@@ -71,10 +63,7 @@ class NeonBackground extends StatelessWidget {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        boxShadow: [BoxShadow(color: color, blurRadius: 90, spreadRadius: 20)],
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, boxShadow: [BoxShadow(color: color, blurRadius: 90, spreadRadius: 20)]),
     );
   }
 }
@@ -111,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: 10),
                         Text('TERA', textAlign: TextAlign.center, style: Theme.of(context).textTheme.headlineSmall),
                         const SizedBox(height: 6),
-                        const Text('Seu assistente pessoal de servico', textAlign: TextAlign.center),
+                        const Text('Seu assistente pessoal de serviço', textAlign: TextAlign.center),
                         const SizedBox(height: 20),
                         TextField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email')),
                         const SizedBox(height: 12),
@@ -125,9 +114,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   final ok = await context.read<AppState>().login(_email.text, _password.text);
                                   setState(() => _loading = false);
                                   if (!ok && context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Login invalido. Confira email e senha.')),
-                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Login inválido. Confira email e senha.')));
                                   }
                                 },
                           child: Text(_loading ? 'Entrando...' : 'Entrar'),
@@ -166,7 +153,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
-    final professions = app.professions;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Cadastro')),
@@ -187,11 +173,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       TextField(controller: _email, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email')),
                       const SizedBox(height: 12),
                       DropdownButtonFormField<String>(
-                        value: _profession,
-                        decoration: const InputDecoration(labelText: 'Profissao principal'),
-                        items: professions
-                            .map((p) => DropdownMenuItem(value: p.name, child: Text('${p.name} (${p.category})')))
-                            .toList(),
+                        initialValue: _profession,
+                        decoration: const InputDecoration(labelText: 'Profissão principal'),
+                        items: app.professions.map((p) => DropdownMenuItem(value: p.name, child: Text('${p.name} (${p.category})'))).toList(),
                         onChanged: (value) => setState(() => _profession = value),
                       ),
                       const SizedBox(height: 12),
@@ -202,29 +186,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ? null
                             : () async {
                                 if (_name.text.isEmpty || _email.text.isEmpty || _password.text.length < 6 || _profession == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Preencha todos os campos. Senha minima: 6 caracteres.')),
-                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Preencha todos os campos. Senha mínima: 6 caracteres.')));
                                   return;
                                 }
                                 setState(() => _loading = true);
-                                final ok = await context.read<AppState>().register(
-                                  name: _name.text,
-                                  email: _email.text,
-                                  profession: _profession!,
-                                  password: _password.text,
-                                );
+                                final ok = await context.read<AppState>().register(name: _name.text, email: _email.text, profession: _profession!, password: _password.text);
                                 setState(() => _loading = false);
                                 if (!context.mounted) return;
                                 if (!ok) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Nao foi possivel cadastrar. Email pode ja existir.')),
-                                  );
+                                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Não foi possível cadastrar. Email pode já existir.')));
                                   return;
                                 }
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Cadastro concluido. Fa�a login.')),
-                                );
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Cadastro concluído. Faça login.')));
                                 Navigator.pop(context);
                               },
                         child: Text(_loading ? 'Salvando...' : 'Cadastrar'),
@@ -251,30 +224,23 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final _title = TextEditingController();
   final _content = TextEditingController();
-  String _type = 'Informacao';
+  final _search = TextEditingController();
+  String _type = 'Informação';
   String? _profession;
 
   @override
   Widget build(BuildContext context) {
     final app = context.watch<AppState>();
     final user = app.user!;
-    final professions = app.professions;
     _profession ??= user.profession;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('TERA Android'),
         actions: [
-          IconButton(
-            tooltip: 'Acessibilidade',
-            onPressed: () => _showAccessibility(context, app),
-            icon: const Icon(Icons.accessibility_new),
-          ),
-          IconButton(
-            tooltip: 'Sair',
-            onPressed: () => context.read<AppState>().logout(),
-            icon: const Icon(Icons.logout),
-          ),
+          IconButton(tooltip: 'Acessibilidade', onPressed: () => _showAccessibility(context, app), icon: const Icon(Icons.accessibility_new)),
+          IconButton(tooltip: 'Backup GitHub', onPressed: () => _showBackupSettings(context, app), icon: const Icon(Icons.cloud_upload)),
+          IconButton(tooltip: 'Sair', onPressed: () => context.read<AppState>().logout(), icon: const Icon(Icons.logout)),
         ],
       ),
       body: NeonBackground(
@@ -294,20 +260,28 @@ class _HomeScreenState extends State<HomeScreen> {
                           children: [
                             Image.asset('assets/images/logo.png', width: 42, height: 42),
                             const SizedBox(width: 12),
-                            Expanded(
-                              child: Text('Ol�, ${user.name}', style: Theme.of(context).textTheme.titleLarge),
-                            ),
+                            Expanded(child: Text('Olá, ${user.name}', style: Theme.of(context).textTheme.titleLarge)),
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text('Profissao: ${user.profession}'),
+                        Text('Profissão: ${user.profession}'),
                         const SizedBox(height: 4),
-                        const Text('Salve arquivos e informacoes de trabalho no banco local com historico.'),
+                        const Text('Salve arquivos e informações de trabalho no banco local com histórico.'),
                       ],
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: _search,
+                  onChanged: context.read<AppState>().setSearchQuery,
+                  decoration: const InputDecoration(prefixIcon: Icon(Icons.search), labelText: 'Buscar no histórico'),
+                ),
+                SwitchListTile(
+                  value: app.onlyFavorites,
+                  onChanged: app.setOnlyFavorites,
+                  title: const Text('Mostrar só favoritos'),
+                ),
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16),
@@ -317,48 +291,39 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text('Novo registro profissional', style: Theme.of(context).textTheme.titleMedium),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
-                          value: _profession,
-                          decoration: const InputDecoration(labelText: 'Profissao do registro'),
-                          items: professions.map((p) => DropdownMenuItem(value: p.name, child: Text(p.name))).toList(),
+                          initialValue: _profession,
+                          decoration: const InputDecoration(labelText: 'Profissão do registro'),
+                          items: app.professions.map((p) => DropdownMenuItem(value: p.name, child: Text(p.name))).toList(),
                           onChanged: (v) => setState(() => _profession = v),
                         ),
                         const SizedBox(height: 12),
                         DropdownButtonFormField<String>(
-                          value: _type,
+                          initialValue: _type,
                           decoration: const InputDecoration(labelText: 'Tipo'),
                           items: const [
-                            DropdownMenuItem(value: 'Informacao', child: Text('Informacao')),
+                            DropdownMenuItem(value: 'Informação', child: Text('Informação')),
                             DropdownMenuItem(value: 'Arquivo', child: Text('Arquivo')),
                             DropdownMenuItem(value: 'Checklist', child: Text('Checklist')),
                             DropdownMenuItem(value: 'Lembrete', child: Text('Lembrete')),
                           ],
-                          onChanged: (v) => setState(() => _type = v ?? 'Informacao'),
+                          onChanged: (v) => setState(() => _type = v ?? 'Informação'),
                         ),
                         const SizedBox(height: 12),
-                        TextField(controller: _title, decoration: const InputDecoration(labelText: 'Titulo')),
+                        TextField(controller: _title, decoration: const InputDecoration(labelText: 'Título')),
                         const SizedBox(height: 12),
-                        TextField(controller: _content, maxLines: 4, decoration: const InputDecoration(labelText: 'Conteudo / descricao')),
+                        TextField(controller: _content, maxLines: 4, decoration: const InputDecoration(labelText: 'Conteúdo / descrição')),
                         const SizedBox(height: 12),
                         ElevatedButton(
                           onPressed: () async {
                             if (_profession == null || _title.text.isEmpty || _content.text.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Preencha profissao, titulo e conteudo.')),
-                              );
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Preencha profissão, título e conteúdo.')));
                               return;
                             }
-                            await context.read<AppState>().addRecord(
-                                  profession: _profession!,
-                                  type: _type,
-                                  title: _title.text,
-                                  content: _content.text,
-                                );
+                            await context.read<AppState>().addRecord(profession: _profession!, type: _type, title: _title.text, content: _content.text);
                             _title.clear();
                             _content.clear();
                             if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Registro salvo no banco local.')),
-                              );
+                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Registro salvo no banco local.')));
                             }
                           },
                           child: const Text('Salvar'),
@@ -368,16 +333,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                Text('Historico', style: Theme.of(context).textTheme.titleMedium),
+                Text('Histórico', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
-                ...app.records.map((r) => _recordCard(r)).toList(),
+                ...app.records.map((r) => _recordCard(context, r)),
                 if (app.records.isEmpty)
-                  const Card(
-                    child: Padding(
-                      padding: EdgeInsets.all(14),
-                      child: Text('Nenhum registro ainda. Crie o primeiro acima.'),
-                    ),
-                  ),
+                  const Card(child: Padding(padding: EdgeInsets.all(14), child: Text('Nenhum registro encontrado.'))),
               ],
             ),
           ),
@@ -386,12 +346,91 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _recordCard(WorkRecord record) {
+  Widget _recordCard(BuildContext context, WorkRecord record) {
     return Card(
       child: ListTile(
+        leading: IconButton(
+          icon: Icon(record.isFavorite ? Icons.star : Icons.star_border),
+          onPressed: () => context.read<AppState>().toggleFavorite(record),
+        ),
         title: Text(record.title),
-        subtitle: Text('${record.profession} � ${record.type}\n${record.content}'),
-        trailing: Text(DateFormat('dd/MM HH:mm').format(record.createdAt)),
+        subtitle: Text('${record.profession} • ${record.type}\n${record.content}'),
+        trailing: PopupMenuButton<String>(
+          onSelected: (v) async {
+            if (v == 'edit') {
+              await _editRecord(context, record);
+            }
+            if (v == 'delete' && context.mounted) {
+              await context.read<AppState>().deleteRecord(record.id);
+            }
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'edit', child: Text('Editar')),
+            PopupMenuItem(value: 'delete', child: Text('Excluir')),
+          ],
+        ),
+        isThreeLine: true,
+      ),
+    );
+  }
+
+  Future<void> _editRecord(BuildContext context, WorkRecord record) async {
+    final title = TextEditingController(text: record.title);
+    final content = TextEditingController(text: record.content);
+    String selectedType = record.type;
+    String selectedProfession = record.profession;
+    final professions = context.read<AppState>().professions;
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.bgB,
+        title: const Text('Editar registro'),
+        content: StatefulBuilder(
+          builder: (ctx, setStateDialog) => SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                DropdownButtonFormField<String>(
+                  initialValue: selectedProfession,
+                  items: professions.map((p) => DropdownMenuItem(value: p.name, child: Text(p.name))).toList(),
+                  onChanged: (v) => setStateDialog(() => selectedProfession = v ?? selectedProfession),
+                ),
+                const SizedBox(height: 10),
+                DropdownButtonFormField<String>(
+                  initialValue: selectedType,
+                  items: const [
+                    DropdownMenuItem(value: 'Informação', child: Text('Informação')),
+                    DropdownMenuItem(value: 'Arquivo', child: Text('Arquivo')),
+                    DropdownMenuItem(value: 'Checklist', child: Text('Checklist')),
+                    DropdownMenuItem(value: 'Lembrete', child: Text('Lembrete')),
+                  ],
+                  onChanged: (v) => setStateDialog(() => selectedType = v ?? selectedType),
+                ),
+                const SizedBox(height: 10),
+                TextField(controller: title, decoration: const InputDecoration(labelText: 'Título')),
+                const SizedBox(height: 10),
+                TextField(controller: content, maxLines: 3, decoration: const InputDecoration(labelText: 'Conteúdo')),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          ElevatedButton(
+            onPressed: () async {
+              await context.read<AppState>().updateRecord(
+                    id: record.id,
+                    profession: selectedProfession,
+                    type: selectedType,
+                    title: title.text,
+                    content: content.text,
+                  );
+              if (context.mounted) Navigator.pop(context);
+            },
+            child: const Text('Salvar'),
+          ),
+        ],
       ),
     );
   }
@@ -400,33 +439,103 @@ class _HomeScreenState extends State<HomeScreen> {
     await showModalBottomSheet(
       context: context,
       backgroundColor: AppTheme.bgB,
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Acessibilidade', style: Theme.of(context).textTheme.titleMedium),
-              SwitchListTile(
-                value: app.highContrast,
-                onChanged: (v) => app.toggleContrast(v),
-                title: const Text('Alto contraste'),
-              ),
-              const SizedBox(height: 8),
-              Text('Tamanho da fonte: ${app.textScale.toStringAsFixed(1)}x'),
-              Slider(
-                value: app.textScale,
-                min: 0.9,
-                max: 1.6,
-                divisions: 7,
-                onChanged: app.setScale,
-              ),
-            ],
+      builder: (_) => Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Acessibilidade', style: Theme.of(context).textTheme.titleMedium),
+            SwitchListTile(value: app.highContrast, onChanged: app.toggleContrast, title: const Text('Alto contraste')),
+            const SizedBox(height: 8),
+            Text('Tamanho da fonte: ${app.textScale.toStringAsFixed(1)}x'),
+            Slider(value: app.textScale, min: 0.9, max: 1.6, divisions: 7, onChanged: app.setScale),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showBackupSettings(BuildContext context, AppState app) async {
+    final cfg = await GitHubBackupService.readConfig();
+    final enabled = ValueNotifier<bool>(cfg.enabled);
+    final owner = TextEditingController(text: cfg.owner);
+    final repo = TextEditingController(text: cfg.repo);
+    final branch = TextEditingController(text: cfg.branch);
+    final path = TextEditingController(text: cfg.path);
+    final token = TextEditingController();
+    double minutes = cfg.intervalMinutes.toDouble();
+
+    if (!context.mounted) return;
+
+    await showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        backgroundColor: AppTheme.bgB,
+        title: const Text('Backup GitHub'),
+        content: StatefulBuilder(
+          builder: (ctx, setStateDialog) => SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ValueListenableBuilder<bool>(
+                  valueListenable: enabled,
+                  builder: (_, v, __) => SwitchListTile(value: v, onChanged: (nv) => enabled.value = nv, title: const Text('Ativar backup periódico')),
+                ),
+                TextField(controller: owner, decoration: const InputDecoration(labelText: 'Owner GitHub (ex: lzvsrx)')),
+                const SizedBox(height: 8),
+                TextField(controller: repo, decoration: const InputDecoration(labelText: 'Repo (ex: terapps)')),
+                const SizedBox(height: 8),
+                TextField(controller: branch, decoration: const InputDecoration(labelText: 'Branch (ex: main)')),
+                const SizedBox(height: 8),
+                TextField(controller: path, decoration: const InputDecoration(labelText: 'Arquivo backup (ex: backups/db.json)')),
+                const SizedBox(height: 8),
+                TextField(controller: token, obscureText: true, decoration: const InputDecoration(labelText: 'Token GitHub (PAT)')),
+                const SizedBox(height: 8),
+                Text('Intervalo (min): ${minutes.toInt()}'),
+                Slider(min: 5, max: 120, divisions: 23, value: minutes, onChanged: (v) => setStateDialog(() => minutes = v)),
+              ],
+            ),
           ),
-        );
-      },
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Fechar')),
+          ElevatedButton(
+            onPressed: () async {
+              final newConfig = BackupConfig(
+                enabled: enabled.value,
+                owner: owner.text,
+                repo: repo.text,
+                branch: branch.text.isEmpty ? 'main' : branch.text,
+                path: path.text.isEmpty ? 'backups/tera-db-snapshot.json' : path.text,
+                intervalMinutes: minutes.toInt(),
+              );
+              await app.saveBackupConfig(newConfig, token.text);
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Configuração de backup salva.')));
+              }
+            },
+            child: const Text('Salvar config'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                await app.backupNow();
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Backup enviado ao GitHub com sucesso.')));
+                }
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Erro no backup: $e')));
+                }
+              }
+            },
+            child: const Text('Backup agora'),
+          ),
+        ],
+      ),
     );
   }
 }
+
 
